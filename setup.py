@@ -12,7 +12,7 @@ def read_requirements(file_name):
 
 setup(
     name="snakespawn",
-    version="1.0.5",
+    version="1.0.6",
     packages=find_packages(),
     entry_points={
         "console_scripts": [

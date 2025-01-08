@@ -48,7 +48,7 @@ def title_caseify(name:str) -> str:
 
     return ret
 
-def ListStrFactory(valid_chars:str = string.ascii_letters + '_ ', delimiter:str = ','):
+def ListStrFactory(valid_chars:str = string.ascii_letters + string.digits + '_ ', delimiter:str = ','):
     valid_chars += delimiter
     class ListStr(list):
         def __init__(self, value:str):
@@ -176,7 +176,7 @@ def main():
 f"""from {snake_caseify(args["package-name"])}.core import *
 import unittest
 
-class Test{title_caseify(args['package-name'])}Core:
+class Test{title_caseify(args['package-name'])}Core(unittest.TestCase):
     ...
 """
                 )
