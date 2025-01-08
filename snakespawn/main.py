@@ -231,9 +231,7 @@ class Test{title_caseify(args['package-name'])}Utils(unittest.TestCase):
         (args["package-directory"]/"MANIFEST.in").touch()
 
     # License
-    if args["license"]:
-        if args["license-path"]:
-            handle_cli_error(CLIError(args, "Cannot specify both a --license and --license-path.", args["license"], args["license-path"]))
+    if args["license"] and args["license-path"] is None:
         (args["package-directory"]/"LICENSE").touch()
         with open(args["package-directory"] / "LICENSE", 'w') as fp:
             try:
