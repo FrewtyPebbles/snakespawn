@@ -12,7 +12,7 @@ def read_requirements(file_name):
 
 setup(
     name="snakespawn",
-    version="1.0.6",
+    version="1.0.10",
     packages=find_packages(),
     entry_points={
         "console_scripts": [
@@ -22,6 +22,7 @@ setup(
     python_requires=">=3.10",
     author="William L.",
     long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     description="A tool for initializing python packages.",
     license="MIT",
     install_requires=read_requirements("requirements.txt")

@@ -1,8 +1,12 @@
 from cli_veripy import CLIArguments, CLIError
 from datetime import datetime
 
+EXISTING_LICENSES = [
+   "MIT", "Apache-2.0"
+]
+
 def get_license(license_name:str, args:CLIArguments) -> str:
-    year = args["license-year"] if args["license-year"] else datetime.now().year
+    year = args["license-year"].year if args["license-year"] else datetime.now().year
     author = args["author"]
     match license_name:
         case "MIT":

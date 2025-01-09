@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 import sys
-from cli_veripy import CLIArguments, CLIError, ExistingPath
+from cli_veripy import CLIArguments, CLIError, ExistingPath, date_ext, datetime_ext, CLIArgument
 from pathlib import Path
-from snakespawn.licenses import get_license
+from snakespawn.licenses import EXISTING_LICENSES, get_license
 import shutil
 import string
 
@@ -89,22 +89,105 @@ class VersionStr(str):
 
 def main():
     args:CLIArguments = CLIArguments(
-        valid_pargs=[Path, str],
+        valid_pargs=[
+            CLIArgument("PackageDirectory", Path,
+                description="The directory in which you would like to generate your package."
+            ),
+            CLIArgument("PackageName", str,
+                description="The name of your package.",
+                long_description="This name should be formatted how it will appear on websites and in conversations.  For example \"CLI Veripy\", \"Matplotlib\" or \"Tensor Flow\"."
+            )
+        ],
         pargs_names=["package-directory", "package-name"],
         valid_flags={
-            "no-requirements", "no-deps", "git-ignore", "tests",
-            "testing", "no-readme", "utils-folder", "core-folder",
-            "examples", "docs", "documentation", "manifest", "force-yes",
-            "force-y", "create-project-directory"
+            CLIArgument("no-requirements",
+                description="Prevents the creation of a requirements.txt file."
+            ),
+            CLIArgument("no-deps",
+                description="Prevents the creation of a requirements.txt file."
+            ),
+            CLIArgument("git-ignore",
+                description="Adds a .gitignore file to your package root.",
+                long_description="includes common python .gitignore patterns."
+            ),
+            CLIArgument("tests",
+                description="Creates a tests folder in the root of your package.",
+                long_description="Test files will be created for core or utils assuming their respective flags are included."            
+            ),
+            CLIArgument("testing",
+                description="Creates a tests folder in the root of your package.",
+                long_description="Test files will be created for core or utils assuming their respective flags are included."            
+            ),
+            CLIArgument("no-readme",
+                description="Prevents the creation of a README.md file."        
+            ),
+            CLIArgument("utils-folder",
+                description="Includes a utility sub-module folder in your package source files directory."
+            ),
+            CLIArgument("core-folder",
+                description="Includes a core sub-module folder in your package source files directory.",
+                long_description="This core folder is where all sub-modules will go if the sub-modules argument is provided."
+            ),
+            CLIArgument("examples",
+                description="Includes an examples folder in your package root."
+            ),
+            CLIArgument("docs",
+                description="Includes an docs folder in your package root.",
+                long_description="Includes a boiler plate index.md file."
+            ),
+            CLIArgument("documentation",
+                description="Includes an docs folder in your package root.",
+                long_description="Includes a boiler plate index.md file."
+            ),
+            CLIArgument("manifest",
+                description="Includes a MANIFEST.in file in your package root."
+            ),
+            CLIArgument("force-yes",
+                description="Answers y(yes) to any and all prompts."        
+            ),
+            CLIArgument("force-y",
+                description="Answers y(yes) to any and all prompts."        
+            ),
+            CLIArgument("create-project-directory",
+                description="Creates the project directory if it doesnt already exist.",
+                long_description="Skips the prompt that appears when the specified project-directory doesnt exist."        
+            )
         },
         valid_kwargs={
-            "version":VersionStr, "build-tool":str, "python-version":str,
-            "author":str, "license":str, "license-year":int,
-            "license-path":ExistingPath, "sub-modules":ListStrFactory()
+            "version":CLIArgument("PackageVersion", VersionStr,
+                description="The starting version of your package."
+            ),
+            "build-tool":CLIArgument("BuildTool", str,
+                description="The build tool used to build your package.  Default is setuptools.",
+                long_description="Currently the only option is setuptools."
+            ),
+            "python-version":CLIArgument("PythonVersion", str,
+                description="This describes the supported python versions.  Default is '>=3.10'",
+                long_description="This is inserted into your build tools and anywhere it is needed in config files."
+            ),
+            "author":CLIArgument("AuthorString", str,
+                description="The author of the package.",
+                long_description="This name is inserted throughout your package wherever the author name should be provided."
+            ),
+            "license":CLIArgument("License", str,
+                description="The license of which your package will be distributed under.",
+                long_description="This license can either be an existing licese or the name of your custom license."
+            ),
+            "license-year":CLIArgument("Year", date_ext(now_str="now", format_set={"%Y"}),
+                description="The year that appears in your license."
+            ),
+            "license-path":CLIArgument("ExistingLicensePath", ExistingPath,
+                description="The path of your custom license of which you would like to distribute your package with.",
+                long_description="This must be an existing path."
+            ),
+            "sub-modules":CLIArgument("CommaSeparatedList", ListStrFactory(),
+                description="A list of the names of all submodules to be included in your package's source folder.  If the core-folder flag is included, these modules will appear in the core folder instead."
+            )
         },
         required_kwargs=["author"],
         exit_on_invalid=True,
-        description="A command line tool for initializing new python projects."
+        description="A command line tool for initializing new python projects.",
+        help_menu=True
     )
 
     # TODO make it able tp take a tuple (type, function) where the function returns a boolean and acts as a verification filter
@@ -222,6 +305,16 @@ class Test{title_caseify(args['package-name'])}Utils(unittest.TestCase):
         with open(args["package-directory"] / "README.md", 'w') as fp:
             fp.write(f"# {args["package-name"]}")
 
+    # git-ignore
+    if args["git-ignore"]:
+        (gi:=(args["package-directory"]/".gitignore")).touch()
+        with open(gi, 'w') as fp:
+            fp.write(f"""/build
+/dist
+/snakespawn.egg-info
+/__pycache__
+""")
+
     # Requirements / Dependencies
     if not (args["no-requirements"] or args["no-deps"]):
         (args["package-directory"]/"requirements.txt").touch()
@@ -231,7 +324,7 @@ class Test{title_caseify(args['package-name'])}Utils(unittest.TestCase):
         (args["package-directory"]/"MANIFEST.in").touch()
 
     # License
-    if args["license"] and args["license-path"] is None:
+    if args["license"] and not args["license-path"]:
         (args["package-directory"]/"LICENSE").touch()
         with open(args["package-directory"] / "LICENSE", 'w') as fp:
             try:
